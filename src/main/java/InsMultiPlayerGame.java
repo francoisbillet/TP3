@@ -16,8 +16,9 @@ import java.util.HashMap;
  */
 public class InsMultiPlayerGame implements MultiPlayerGame {
 
-    private String[] playerNames;
+    private String[] names;
     private int currentPlayer = 0;
+    public boolean gameOn = false;
     
     protected HashMap <Integer, SinglePlayerGame> players;
     
@@ -30,7 +31,9 @@ public class InsMultiPlayerGame implements MultiPlayerGame {
 	 */
     @Override
     public String startNewGame(String[] playerNames) throws Exception {
-        players = new HashMap<Integer, SinglePlayerGame>();
+        gameOn = true;
+        players = new HashMap<>();
+        names=playerNames;
         if (playerNames.length < 1) {
             throw new IllegalArgumentException("Pas assez de joueurs");
         }
@@ -39,9 +42,8 @@ public class InsMultiPlayerGame implements MultiPlayerGame {
                 SinglePlayerGame sg = new SinglePlayerGame();
                 players.put(i,sg);
             }
-            //currentPlayer++;
         }
-        return "Prochain tir : joueur " + playerNames[currentPlayer] + ", tour n° " + players.get(currentPlayer).getCurrentFrame().getFrameNumber() + ", boule n° " + players.get(currentPlayer).getCurrentFrame().getBallsThrown();
+        return "Prochain tir : joueur " + names[currentPlayer] + ", tour n° " + players.get(currentPlayer).getCurrentFrame().getFrameNumber() + ", boule n° " + players.get(currentPlayer).getCurrentFrame().getBallsThrown();
     }
 
     /**
@@ -55,15 +57,23 @@ public class InsMultiPlayerGame implements MultiPlayerGame {
     @Override
     public String lancer(int nombreDeQuillesAbattues) throws Exception {
         players.get(currentPlayer).lancer(nombreDeQuillesAbattues);
-        
-        if (currentPlayer==playerNames.length-1 && players.get(currentPlayer).getCurrentFrame().getFrameNumber()==10 && players.get(currentPlayer).getCurrentFrame().isFinished()) {
+        if (currentPlayer==names.length-1 && players.get(currentPlayer).getCurrentFrame().getFrameNumber()==10 && players.get(currentPlayer).getCurrentFrame().isFinished()) {
+            gameOn = false;
             return "Partie terminée";
+        }
+        if (gameOn==false) {
+            throw new Exception("Partie non démarrée ou terminée");
         }
         else {
             if (players.get(currentPlayer).getCurrentFrame().isFinished()) {
-            currentPlayer++;
+                if (currentPlayer==names.length-1) {
+                    currentPlayer=0;
+                }
+                else {
+                    currentPlayer++;
+                }
         }
-        return "Prochain tir : joueur " + playerNames[currentPlayer-1] + ", tour n° " + players.get(currentPlayer-1).getCurrentFrame().getFrameNumber() + ", boule n° " + players.get(currentPlayer-1).getCurrentFrame().getBallsThrown();
+        return "Prochain tir : joueur " + names[currentPlayer] + ", tour n° " + players.get(currentPlayer).getCurrentFrame().getFrameNumber() + ", boule n° " + players.get(currentPlayer).getCurrentFrame().getBallsThrown();
         }
     }
 
@@ -76,12 +86,12 @@ public class InsMultiPlayerGame implements MultiPlayerGame {
 	 */
     @Override
     public int scoreFor(String playerName) throws Exception {
-        for (int i=0;i<playerNames.length;i++) {
-            if (playerNames[i].equals(playerName)) {
+        for (int i=0;i<names.length;i++) {
+            if (names[i].equals(playerName)) {
                 return players.get(i).score();
             }
         }
-        throw new NullPointerException();
+        throw new Exception("Ce joueur ne joue pas dans cette partie");
     }
     
 }
